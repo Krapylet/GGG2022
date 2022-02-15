@@ -58,17 +58,16 @@ public class CarControls : MonoBehaviour
         } // Hvis vi er i luften kan vi holde den nuværende fart ved at holde frem nede
         else {
             AirControls();
+
+            // Få hop til at føles bedre ved at øge tyngdekraften når vi falder.
+            tweakJumpForces();
         }
 
         if (isBreaking) {
             Brake();
-        }
-
-        tweakJumpForces();
+        }  
     }
 
-    // create shorthand name
-    RaycastHit boxHit;
     private void DetectGround() {
         // create shorthand name
         Collider gdc = groundDetector;
