@@ -1,23 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GoalScript : MonoBehaviour
 {
-    public float remainingTime;
-
-    private void Update() {
-        remainingTime -= Time.deltaTime;
-    }
 
     private void OnTriggerEnter(Collider other) {
 
-        if(other.name == "RaceCar") {
-            if (remainingTime < 0) {
-                Debug.Log("Jeg kom for sent :(");
-            }
-            else {
-                Debug.Log("Jeg vandt!");
+        if(other.tag == "RaceCar") {
+            // Get UI acess
+            CarUI ui = other.GetComponent<CarUI>();
+
+            // Increase the lap counter by one.
+            ui.lapCounter++;
+
+            //Update the UI text. becomes "Runde x/3"
+            ui.lapCounterText.text = "Runde: " + ui.lapCounter + "/3";
+
+            if (ui.lapCounter == 4) {
+                // Spillet er færdig. Gå til menu.
+                SceneManager.LoadScene("StartMenu");
             }
         }
     }

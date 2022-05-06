@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class CarControls : MonoBehaviour
 {
-
     public string player;
 
     public float speed;
@@ -19,6 +18,17 @@ public class CarControls : MonoBehaviour
     public float airDrag;
     public Collider groundDetector;
     public Transform checkpoint;
+    public Camera carCamera;
+
+    public float speedSoundThreshold;
+    public AudioSource carAudio;
+    public AudioClip IdleSound;
+    public AudioClip acceleratingSound;
+    public AudioClip speedingSound;
+
+    public int minFOV;
+    public int FOVscaling;
+    public int maxFOV;
 
     private Rigidbody rb;
     private bool isBreaking;
@@ -38,8 +48,15 @@ public class CarControls : MonoBehaviour
             Jump();
         }
 
+        // Hold gang i motor lyden
+        //MakeMotorSounds();
+
         // Brems når vi trykker på ctrl
         isBreaking = Input.GetButtonDown("Brake_" + player);
+
+
+        //Og FOV baseret på bilens hastighed
+        UpdateFOV();
     }
 
     private void LateUpdate() {
@@ -67,6 +84,60 @@ public class CarControls : MonoBehaviour
             Brake();
         }  
     }
+
+    private void UpdateFOV() {
+        //Find bilens nuværende hastighed og FOV:
+        float currentSpeed = rb.velocity.magnitude;
+        float currentFOV = carCamera.fieldOfView;
+
+        //Vi vil have 60 FOV ved 0 speed og 100 FOV ved 200 speed, så vi laver noget hurtigt procentregning:
+        float FOVincrease = currentSpeed / 100f * FOVscaling;
+        float targetFOV = minFOV + FOVincrease;
+
+        // Vi sørger for at FOVen aldrig kommer over maxFov, for det ser mærkelig ud.
+        targetFOV = Mathf.Min(targetFOV, maxFOV);
+        
+        // Lav en glidende overgang mellem de to FOV tal.
+        float actualFOV = Mathf.Lerp(currentFOV, targetFOV, 0.2f);
+
+        // Sæt FOV værdien på cameraet.
+        carCamera.fieldOfView = actualFOV;
+    }
+
+    private void MakeMotorSounds() {
+        bool playerIsMoving = Input.GetAxis("Vertical_" + player) != 0;
+        if (!playerIsMoving) {
+            KeepPlayingSound(IdleSound);
+        }
+        if (playerIsMoving) {
+            float currentSpeed = rb.velocity.magnitude;
+
+            // If the car is still slow, play the acceleracting sound
+            if (currentSpeed < speedSoundThreshold) {
+                KeepPlayingSound(acceleratingSound);
+            }
+            else {
+                KeepPlayingSound(speedingSound);
+            }
+        }
+    }
+
+    private void KeepPlayingSound(AudioClip sound) {
+
+        // Find out if we are already playing the correct sound.
+        bool IsAlreadyPlayingSound = carAudio.clip == sound && carAudio.isPlaying;
+        
+        // If we are already playing the sound, dont do anything.
+        if (IsAlreadyPlayingSound) {
+            // end the method early.
+            return;
+        }
+
+        // otherwise, start assign the new sound and start it over.
+        carAudio.clip = IdleSound;
+        carAudio.Play();
+    }
+
 
     private void DetectGround() {
         // create shorthand name
